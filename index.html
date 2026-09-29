@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>중학생을 위한 AI 웹앱 제작 마법 프롬프트</title>
+<style>
+  :root {
+    --primary: #2563EB; --primary-dark: #1D4ED8;
+    --primary-tint: rgba(37,99,235,0.06); --primary-soft: rgba(37,99,235,0.14);
+    --grad: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+    --sidebar-bg: #1E293B; --sidebar-text: rgba(255,255,255,0.65); --sidebar-section: rgba(255,255,255,0.35); --sidebar-border: rgba(255,255,255,0.08);
+    
+    /* Light Mode */
+    --bg: #F8FAFC; 
+    --card: #FFFFFF; 
+    --card-soft: #F1F5F9;
+    --text: #0F172A; 
+    --text-2: #475569; 
+    --muted: #94A3B8;
+    --border: #E2E8F0; 
+    --border-strong: #CBD5E1;
+    
+    --ok: #16A34A; --ok-bg: #DCFCE7;
+    --r: 12px; --r-lg: 16px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.05); --shadow-md: 0 4px 14px rgba(37,99,235,0.10);
+    --sw: 280px;
+  }
+
+  /* Dark Mode Variables */
+  [data-theme="dark"] {
+    --bg: #0F172A;
+    --card: #1E293B;
+    --card-soft: #334155;
+    --text: #F8FAFC;
+    --text-2: #CBD5E1;
+    --muted: #64748B;
+    --border: #334155;
+    --border-strong: #475569;
+    --primary-tint: rgba(37,99,235,0.15);
+    --shadow-sm: 0 4px 6px rgba(0,0,0,0.3);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; font-family:-apple-system, BlinkMacSystemFont, 'Pretendard', 'Segoe UI', Roboto, sans-serif; background:var(--bg); color:var(--text); line-height:1.6; transition: background-color 0.3s ease, color 0.3s ease; }
+  button { cursor:pointer; border:none; background:none; font-family:inherit; }
+
+  /* ===== APP LAYOUT ===== */
+  .app { display:flex; min-height:100vh; }
+  .sidebar { position:fixed; top:0; left:0; bottom:0; width:var(--sw); background:var(--sidebar-bg); color:var(--sidebar-text); overflow-y:auto; padding:24px 16px; z-index:50; }
+  
+  /* Logo */
+  .sb-brand { display:flex; flex-direction:column; align-items:flex-start; gap:12px; padding-bottom:18px; border-bottom:1px solid var(--sidebar-border); margin-bottom:16px; }
+  .sb-logo-img { max-width: 160px; background: #ffffff; padding: 8px 12px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  
+  .sb-brand b { color:#fff; font-size:14px; display:block; margin-top:4px; }
+  .sb-brand span { font-size:11px; color:var(--sidebar-section); }
+  
+  /* Sidebar Nav */
+  .nav-section { font-size:11px; font-weight:700; color:var(--sidebar-section); padding:16px 8px 6px; text-transform:uppercase; letter-spacing:0.5px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:8px; color:var(--sidebar-text); font-size:13px; font-weight:500; cursor:pointer; transition:0.15s; margin-bottom:4px; }
+  .nav-item:hover { background:rgba(255,255,255,0.06); color:#fff; }
+  .nav-item.active { background:var(--primary); color:#fff; font-weight:700; }
+  .nav-num { width:22px; height:22px; border-radius:5px; background:rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0;}
+
+  /* Main Layout */
+  .main { margin-left:var(--sw); flex:1; min-height:100vh; padding:36px 44px 80px; max-width:1160px; }
+  .main-head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:24px; }
+  .crumb { font-size:12px; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+  .main h1 { font-size:26px; font-weight:800; color:var(--text); letter-spacing:-0.5px; }
+  .lead { color:var(--text-2); font-size:14.5px; margin-top:6px; }
+  
+  /* Theme Toggle Button */
+  .theme-btn { width:44px; height:44px; border-radius:12px; background:var(--card); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:var(--shadow-sm); transition:all 0.2s; flex-shrink:0; }
+  .theme-btn:hover { transform:scale(1.05); background:var(--card-soft); }
+
+  .panel { display:none; animation: fadeIn 0.3s ease-in-out; } 
+  .panel.active { display:block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ===== CARD & SECTIONS ===== */
+  .practice { background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg); box-shadow:var(--shadow-sm); overflow:hidden; transition: background-color 0.3s, border-color 0.3s; margin-top: 24px; }
+  .practice-head { display:flex; gap:16px; padding:20px 24px; border-bottom:1px solid var(--border); background:var(--card-soft); align-items:center; transition: background-color 0.3s, border-color 0.3s; }
+  .practice-num { width:42px; height:42px; border-radius:10px; background:var(--grad); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; flex-shrink:0; }
+  .practice-tag { font-size:11px; font-weight:700; color:var(--primary); background:var(--primary-tint); border:1px solid var(--primary-soft); padding:3px 9px; border-radius:99px; }
+  .practice-body { padding:24px; }
+  .practice-section { margin-bottom: 24px; } .practice-section:last-child { margin-bottom: 0; }
+  .practice-section h4 { font-size:15px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  
+  .mode-badge { font-size:11px; padding:2px 8px; border-radius:6px; background:var(--card-soft); border:1px solid var(--border); font-weight:700; color:#0369A1; }
+  [data-theme="dark"] .mode-badge { color:#7DD3FC; }
+
+  /* ===== GRID & FORM CONTROLS ===== */
+  .plan-grid { display:grid; grid-template-columns:1.05fr 1fr; gap:22px; align-items:start; }
+  .plan-form { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:20px; box-shadow:0 1px 2px rgba(0,0,0,0.02); transition: background-color 0.3s, border-color 0.3s; }
+  .pf-item { margin-bottom:16px; } .pf-item:last-child { margin-bottom:0; }
+  .pf-label { display:block; font-size:13px; font-weight:700; margin-bottom:6px; color:var(--text); }
+  .pf-item input[type=text], .pf-item textarea { width:100%; border:1.5px solid var(--border); border-radius:8px; padding:10px 12px; font-size:13px; font-family:inherit; outline:none; transition:0.15s; background:var(--bg); color:var(--text); }
+  .pf-item input:focus, .pf-item textarea:focus { border-color:var(--primary); background:var(--card); box-shadow:0 0 0 3px var(--primary-soft); }
+  .pf-hint { font-size:11.5px; color:var(--muted); margin-top:5px; }
+
+  /* ===== PROMPT BLOCK & EDITABLE OUTPUT ===== */
+  .prompt-block { border:1px solid var(--border); border-radius:var(--r); overflow:hidden; background:var(--card); margin-bottom:12px; transition: background-color 0.3s, border-color 0.3s; }
+  .prompt-block:last-child { margin-bottom:0; }
+  .pb-head { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:var(--primary-tint); border-bottom:1px solid var(--border); }
+  .pb-title { font-size:12px; font-weight:700; color:var(--primary); }
+  .pb-badge { font-size:11px; background:var(--card); border:1px solid var(--border-strong); color:var(--text-2); padding:2px 6px; border-radius:4px; margin-left:6px; font-weight:normal; }
+  .pb-copy { font-size:12px; font-weight:700; color:var(--primary); background:var(--card); border:1px solid var(--primary-soft); padding:5px 12px; border-radius:6px; transition:0.15s; }
+  .pb-copy:hover { background:var(--primary); color:#fff; border-color:var(--primary); }
+  .pb-copy.copied { background:var(--ok); border-color:var(--ok); color:#fff; }
+  .pb-content { padding:14px; font-size:13px; line-height:1.7; background:var(--card-soft); color:var(--text); white-space:pre-wrap; word-break:break-all; min-height:80px; outline:none; font-family:'Pretendard', sans-serif; transition: background-color 0.3s; }
+  .pb-content:focus { background:var(--card); box-shadow:inset 0 0 0 2px var(--primary-soft); }
+
+  /* ===== STATE PILLS ===== */
+  .state-pill { display:inline-flex; gap:8px; background:var(--card-soft); border:1px solid var(--border); padding:6px 12px; border-radius:8px; font-size:12px; margin-top: 16px; margin-bottom: 0; color:var(--text-2); flex-wrap:wrap; transition: background-color 0.3s, border-color 0.3s; }
+  .state-pill b { color:var(--primary); }
+
+  @media (max-width: 960px) {
+    .plan-grid { grid-template-columns:1fr; }
+    .sidebar { width:230px; }
+    .main { margin-left:230px; padding:24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- 사이드바 내비게이션 -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <img src="올리브로고.png" alt="OLIVE CREATIVE MENTOR" class="sb-logo-img">
+      <div><b>바이브 코딩 마법 가이드</b><span>중학생을 위한 앱 메이커</span></div>
+    </div>
+    
+    <div class="nav-section">7단계 웹앱 제작 프로세스</div>
+    
+    <!-- 0~6단계 메뉴 -->
+    <div class="nav-item active" data-tab="p0" data-title="0단계: AI 멘토 설정하기" data-crumb="STEP 0" data-lead="나에게 맞는 맞춤형 AI 설정하기 (가장 먼저 입력하세요!)">
+      <span class="nav-num">0</span> 0단계: 멘토 설정
+    </div>
+    <div class="nav-item" data-tab="p1" data-title="1단계: 교과 주제 정하기" data-crumb="STEP 1" data-lead="어떤 과목, 어떤 주제로 만들지 기획합니다.">
+      <span class="nav-num">1</span> 1단계: 아이디어 기획
+    </div>
+    <div class="nav-item" data-tab="p2" data-title="2단계: 작동 방식 기획하기" data-crumb="STEP 2" data-lead="사용자 상호작용 및 시나리오를 구상합니다.">
+      <span class="nav-num">2</span> 2단계: 시나리오 구성
+    </div>
+    <div class="nav-item" data-tab="p3" data-title="3단계: 디자인 설계하기" data-crumb="STEP 3" data-lead="앱의 화면 구조와 테마(디자인)를 결정합니다.">
+      <span class="nav-num">3</span> 3단계: UI/UX 기획
+    </div>
+    <div class="nav-item" data-tab="p4" data-title="4단계: 웹앱 코드 생성하기" data-crumb="STEP 4" data-lead="AI가 작성한 코드를 실행해 보고 오류를 수정합니다.">
+      <span class="nav-num">4</span> 4단계: 본격적인 코딩
+    </div>
+    <div class="nav-item" data-tab="p5" data-title="5단계: 완성도 높이기" data-crumb="STEP 5" data-lead="실제 학습 내용과 추가 기능을 반영하여 디테일을 살립니다.">
+      <span class="nav-num">5</span> 5단계: 기능 고도화
+    </div>
+    <div class="nav-item" data-tab="p6" data-title="6단계: 앱 발표하기" data-crumb="STEP 6" data-lead="완성된 앱을 소개하는 멋진 포트폴리오 웹페이지를 만듭니다.">
+      <span class="nav-num">6</span> 6단계: 포트폴리오
+    </div>
+  </aside>
+
+  <!-- 메인 작업 영역 -->
+  <main class="main">
+    <div class="main-head">
+      <div>
+        <div class="crumb" id="hd-crumb">STEP 0</div>
+        <h1 id="hd-title">0단계: AI 멘토 설정하기</h1>
+        <p class="lead" id="hd-lead">나에게 맞는 맞춤형 AI 설정하기 (가장 먼저 입력하세요!)</p>
+      </div>
+      <!-- 다크/라이트 모드 토글 버튼 -->
+      <button class="theme-btn" id="theme-toggle" title="화면 모드 전환">🌙</button>
+    </div>
+
+    <!-- 패널 0: 0단계 -->
+    <div class="panel active" data-panel="p0">
+      <div class="practice">
+        <div class="practice-head">
+          <div class="practice-num">0</div>
+          <div>
+            <span class="practice-tag">0단계</span>
+            <h3 style="margin-top:4px;">AI 멘토 설정하기</h3>
+          </div>
+        </div>
+        <div class="practice-body">
+          <div class="practice-section">
+            <h4>시작 프롬프트 <span class="mode-badge chat">도구: 일반 채팅</span></h4>
+            <p style="font-size:13.5px; color:var(--text-2); margin-bottom:16px;">
+              본격적인 대화를 시작하기 전에 제미나이에게 역할을 먼저 정해줍니다. 아래 문장을 복사해서 제일 먼저 보내보세요!
+            </p>
+            <div class="prompt-block">
+              <div class="pb-head">
+                <span class="pb-title">0. 맞춤형 AI 설정 <span class="pb-badge">복사 후 실행</span></span>
+                <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+              </div>
+              <div class="pb-content" contenteditable="true" id="prompt-step0">너는 지금부터 나를 도와주는 친절한 AI 코딩 멘토야. 앞으로 내가 하는 모든 질문에 대한 대답은 중학생이 완벽하게 이해할 수 있도록 어려운 전문 용어는 빼고, 일상생활의 쉬운 비유를 들어서 설명해 줘.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 패널 1: 1단계 -->
+    <div class="panel" data-panel="p1">
+      <div class="practice">
+        <div class="practice-head">
+          <div class="practice-num">1</div>
+          <div>
+            <span class="practice-tag">1단계</span>
+            <h3 style="margin-top:4px;">교과 주제 정하기 (아이디어 기획)</h3>
+          </div>
+        </div>
+        <div class="practice-body">
+          <div class="practice-section">
+            <h4>프롬프트 조립기 <span class="mode-badge chat">도구: 일반 채팅</span></h4>
+            <div class="plan-grid">
+              <div class="plan-form">
+                <div class="pf-item">
+                  <label class="pf-label">1. 배우고 있는 과목</label>
+                  <input type="text" data-var="subject" value="" placeholder="예: 중학교 3학년 과학, 중학교 2학년 역사">
+                  <div class="pf-hint">웹앱으로 만들고 싶은 과목을 입력하세요.</div>
+                </div>
+                <div class="pf-item">
+                  <label class="pf-label">2. 교과서 단원</label>
+                  <input type="text" data-var="unit" value="" placeholder="예: 상태 변화와 열에너지, 조선의 건국">
+                  <div class="pf-hint">1번 질문 결과 중 하나를 골라 입력하세요.</div>
+                </div>
+                <div class="pf-item">
+                  <label class="pf-label">3. 제일 중요한 핵심 개념</label>
+                  <input type="text" data-var="concept" value="" placeholder="예: 융해와 기화, 조선의 성립 과정">
+                  <div class="pf-hint">2번 질문 결과 중 가장 끌리는 개념을 하나 입력하세요.</div>
+                </div>
+              </div>
+              <div>
+                <div class="prompt-block">
+                  <div class="pb-head">
+                    <span class="pb-title">1-1. 교과서 목차 확인하기 <span class="pb-badge">복사 후 실행</span></span>
+                    <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+                  </div>
+                  <div class="pb-content" contenteditable="true" id="prompt-step1-1"></div>
+                </div>
+                <div class="prompt-block">
+                  <div class="pb-head">
+                    <span class="pb-title">1-2. 핵심 개념 뽑기 <span class="pb-badge">복사 후 실행</span></span>
+                    <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+                  </div>
+                  <div class="pb-content" contenteditable="true" id="prompt-step1-2"></div>
+                </div>
+                <div class="prompt-block">
+                  <div class="pb-head">
+                    <span class="pb-title">1-3. 맞춤형 앱 아이디어 제안 <span class="pb-badge">복사 후 실행</span></span>
+                    <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+                  </div>
+                  <div class="pb-content" contenteditable="true" id="prompt-step1-3"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 패널 2: 2단계 -->
+    <div class="panel" data-panel="p2">
+      <div class="state-pill">
+        <span>선택한 개념: <b class="pill-concept">[핵심 개념]</b></span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">
+          <div class="practice-num">2</div>
+          <div>
+            <span class="practice-tag">2단계</span>
+            <h3 style="margin-top:4px;">작동 방식 기획하기 (시나리오 구성)</h3>
+          </div>
+        </div>
+        <div class="practice-body">
+          <div class="practice-section">
+            <h4>프롬프트 실행 <span class="mode-badge chat">도구: 일반 채팅</span></h4>
+            <div class="plan-grid">
+              <div class="plan-form">
+                <div class="pf-item">
+                  <label class="pf-label">선택한 웹앱 아이디어</label>
+                  <input type="text" data-var="appType" placeholder="예: 2번 가상 실험실 앱, 역사 타임라인 앱">
+                  <div class="pf-hint">1단계에서 추천받은 아이디어 중 하나를 고르세요.</div>
+                </div>
+              </div>
+              <div>
+                <div class="prompt-block">
+                  <div class="pb-head">
+                    <span class="pb-title">2-1. 상호작용 시나리오 설계 <span class="pb-badge">직접 수정 가능</span></span>
+                    <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+                  </div>
+                  <div class="pb-content" contenteditable="true" id="prompt-step2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 패널 3: 3단계 -->
+    <div class="panel" data-panel="p3">
+      <div class="state-pill">
+        <span>선택한 앱 아이디어: <b class="pill-appType">[앱 아이디어]</b></span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">
+          <div class="practice-num">3</div>
+          <div>
+            <span class="practice-tag">3단계</span>
+            <h3 style="margin-top:4px;">디자인 설계하기 (UI/UX 기획)</h3>
+          </div>
+        </div>
+        <div class="practice-body">
+          <div class="practice-section">
+            <h4>프롬프트 실행 <span class="mode-badge chat">도구: 일반 채팅</span></h4>
+            <div class="plan-grid">
+              <div class="plan-form">
+                <div class="pf-item">
+                  <label class="pf-label">결정한 화면 구조</label>
+                  <input type="text" data-var="layout" placeholder="예: 1번 위아래 분할 화면">
+                  <div class="pf-hint">오른쪽 3-1번 질문 결과를 바탕으로 골라주세요.</div>
+                </div>
+                <div class="pf-item">
+                  <label class="pf-label">디자인 테마 (색상, 분위기)</label>
+                  <input type="text" data-var="theme" placeholder="예: 3번 우주 탐험 느낌">
+                </div>
+              </div>
+              <div>
+                <div class="prompt-block">
+                  <div class="pb-head">
+                    <span class="pb-title">3-1. 화면 구조와 색상 추천받기 <span class="pb-badge">복사 후 실행</span></span>
+                    <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+                  </div>
+                  <div class="pb-content" contenteditable="true" id="prompt-step3-1">이제 화면을 설계할 거야. 사용자가 한눈에 이해하기 쉬운 '화면 구조' 3가지와, 몰입감을 높여줄 '디자인 테마(색상, 분위기)' 3가지를 추천해 줘. 아직 코드는 짜지 마.</div>
+                </div>
+                <div class="prompt-block">
+                  <div class="pb-head">
+                    <span class="pb-title">3-2. 최종 기획안 종합하기 <span class="pb-badge">직접 수정 가능</span></span>
+                    <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+                  </div>
+                  <div class="pb-content" contenteditable="true" id="prompt-step3-2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 패널 4: 4단계 -->
+    <div class="panel" data-panel="p4">
+      <div class="practice">
+        <div class="practice-head">
+          <div class="practice-num">4</div>
+          <div>
+            <span class="practice-tag">4단계</span>
+            <h3 style="margin-top:4px;">웹앱 코드 생성하기 (본격적인 코딩)</h3>
+          </div>
+        </div>
+        <div class="practice-body">
+          <div class="practice-section">
+            <h4>코딩 프롬프트 <span class="mode-badge chat">도구: 캔버스 / 일반 채팅</span></h4>
+            <div class="plan-grid">
+              <div class="plan-form">
+                <div class="pf-item">
+                  <label class="pf-label">발생한 오류 증상 (디버깅용)</label>
+                  <textarea rows="4" data-var="bugDesc" placeholder="예: 온도를 올리는 버튼이 안 눌려, 퀴즈 정답을 눌러도 아무 반응이 없어"></textarea>
+                  <div class="pf-hint">초기 코드 생성 후 문제가 발생했을 때만 적어서 사용하세요.</div>
+                </div>
+              </div>
+              <div>
+                <div class="prompt-block">
+                  <div class="pb-head">
+                    <span class="pb-title">4-1. 단일 HTML 코드 생성 <span class="pb-badge">복사 후 실행</span></span>
+                    <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+                  </div>
+                  <div class="pb-content" contenteditable="true" id="prompt-step4-1">너는 뛰어난 프론트엔드 개발자야. 방금 정리한 '최종 기획안'을 바탕으로 실제 작동하는 코드를 작성해 줘. 내가 복사해서 브라우저로 바로 실행할 수 있도록 HTML, CSS, JS가 모두 포함된 '단일 HTML 파일' 하나로 전체 코드를 줘.</div>
+                </div>
+                <div class="prompt-block">
+                  <div class="pb-head">
+                    <span class="pb-title">4-2. 오류 해결하기 (디버깅) <span class="pb-badge">문제 시 실행</span></span>
+                    <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+                  </div>
+                  <div class="pb-content" contenteditable="true" id="prompt-step4-2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 패널 5: 5단계 -->
+    <div class="panel" data-panel="p5">
+      <div class="practice">
+        <div class="practice-head">
+          <div class="practice-num">5</div>
+          <div>
+            <span class="practice-tag">5단계</span>
+            <h3 style="margin-top:4px;">완성도 높이기 (기능 고도화)</h3>
+          </div>
+        </div>
+        <div class="practice-body">
+          <div class="practice-section">
+            <h4>고도화 프롬프트 <span class="mode-badge chat">도구: 캔버스 / 일반 채팅</span></h4>
+            <div class="plan-grid">
+              <div class="plan-form">
+                <div class="pf-item">
+                  <label class="pf-label">앱에 채울 교과 내용 (주제)</label>
+                  <input type="text" data-var="dataTopic" placeholder="예: 물질의 상태 변화">
+                </div>
+                <div class="pf-item">
+                  <label class="pf-label">구체적인 학습 데이터</label>
+                  <textarea rows="3" data-var="dataDetail" placeholder="예: 실험용 설명 글과 힌트 5개"></textarea>
+                </div>
+                <div class="pf-item">
+                  <label class="pf-label">추가하고 싶은 효과</label>
+                  <input type="text" data-var="extraEffect" placeholder="예: 정답을 맞히면 폭죽이 터지는, 버튼 색상을 노란색으로 바꾸는">
+                </div>
+              </div>
+              <div>
+                <div class="prompt-block">
+                  <div class="pb-head">
+                    <span class="pb-title">5-1. 교과 내용 투입하기 <span class="pb-badge">복사 후 실행</span></span>
+                    <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+                  </div>
+                  <div class="pb-content" contenteditable="true" id="prompt-step5-1"></div>
+                </div>
+                <div class="prompt-block">
+                  <div class="pb-head">
+                    <span class="pb-title">5-2. 디테일 효과 추가하기 <span class="pb-badge">복사 후 실행</span></span>
+                    <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+                  </div>
+                  <div class="pb-content" contenteditable="true" id="prompt-step5-2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 패널 6: 6단계 -->
+    <div class="panel" data-panel="p6">
+      <div class="state-pill">
+        <span><b>자동 반영:</b> 우리가 만든 앱은 <b class="pill-concept">[핵심 개념]</b>을(를) 친구들이 쉽게 이해하도록 돕습니다!</span>
+      </div>
+      <div class="practice">
+        <div class="practice-head">
+          <div class="practice-num">6</div>
+          <div>
+            <span class="practice-tag">6단계</span>
+            <h3 style="margin-top:4px;">앱 발표하기 (포트폴리오 제작)</h3>
+          </div>
+        </div>
+        <div class="practice-body">
+          <div class="practice-section">
+            <h4>포트폴리오 생성 프롬프트 <span class="mode-badge chat">도구: 일반 채팅</span></h4>
+            <div class="plan-grid">
+              <div class="plan-form">
+                <div class="pf-item">
+                  <p class="pf-hint" style="margin-top:0; font-size:13.5px; color:var(--text-2); line-height:1.6;">
+                    1단계에서 입력한 **핵심 개념**이 기획 의도에 자동으로 반영됩니다. 
+                    이제 모든 완성이 끝났습니다! 오른쪽 프롬프트를 복사하여 멋진 소개 페이지를 받아보세요.
+                  </p>
+                </div>
+              </div>
+              <div>
+                <div class="prompt-block">
+                  <div class="pb-head">
+                    <span class="pb-title">6-1. 앱 소개 웹페이지 생성 <span class="pb-badge">직접 수정 가능</span></span>
+                    <button class="pb-copy" onclick="copyPrompt(this)">복사</button>
+                  </div>
+                  <div class="pb-content" contenteditable="true" id="prompt-step6"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ===== 1. 테마(다크/라이트) 토글 로직 ===== */
+const themeToggleBtn = document.getElementById('theme-toggle');
+const htmlElement = document.documentElement;
+
+const savedTheme = localStorage.getItem('app-theme');
+if (savedTheme === 'dark') {
+  htmlElement.setAttribute('data-theme', 'dark');
+  themeToggleBtn.textContent = '☀️';
+} else {
+  themeToggleBtn.textContent = '🌙';
+}
+
+themeToggleBtn.addEventListener('click', () => {
+  const currentTheme = htmlElement.getAttribute('data-theme');
+  if (currentTheme === 'dark') {
+    htmlElement.removeAttribute('data-theme');
+    localStorage.setItem('app-theme', 'light');
+    themeToggleBtn.textContent = '🌙';
+  } else {
+    htmlElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('app-theme', 'dark');
+    themeToggleBtn.textContent = '☀️';
+  }
+});
+
+/* ===== 2. 단일 상태 객체 (State) ===== */
+const appState = {
+  subject: "",
+  unit: "",
+  concept: "",
+  appType: "",
+  layout: "",
+  theme: "",
+  bugDesc: "",
+  dataTopic: "",
+  dataDetail: "",
+  extraEffect: ""
+};
+
+/* ===== 3. 7단계(0~6) 탭 전환 내비게이션 ===== */
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const tab = item.dataset.tab;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    const targetPanel = document.querySelector(`.panel[data-panel="${tab}"]`);
+    if (targetPanel) targetPanel.classList.add('active');
+
+    // 헤더 정보 변경
+    document.getElementById('hd-crumb').textContent = item.dataset.crumb || 'STEP';
+    document.getElementById('hd-title').textContent = item.dataset.title || item.textContent.trim();
+    document.getElementById('hd-lead').textContent = item.dataset.lead || '';
+  });
+});
+
+/* ===== 4. 구형 브라우저 및 iFrame 호환 클립보드 복사 (안전 장치) ===== */
+function copyPrompt(btn) {
+  const block = btn.closest('.prompt-block');
+  const contentDiv = block.querySelector('.pb-content');
+  const txt = contentDiv.innerText;
+  
+  const textarea = document.createElement('textarea');
+  textarea.value = txt;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  
+  textarea.select();
+  textarea.setSelectionRange(0, 99999);
+  
+  try {
+    document.execCommand('copy');
+    
+    // 복사 성공 UI 피드백
+    btn.classList.add('copied');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓ 복사됨';
+    setTimeout(() => { 
+      btn.innerHTML = orig; 
+      btn.classList.remove('copied'); 
+    }, 1500);
+  } catch (err) {
+    console.error('복사 실패:', err);
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
+/* ===== 5. 텍스트 연쇄 결합 및 렌더링 ===== */
+function renderAllPrompts() {
+  const subject = appState.subject.trim() || "[과목]";
+  const unit = appState.unit.trim() || "[단원]";
+  const concept = appState.concept.trim() || "[핵심 개념]";
+  const appType = appState.appType.trim() || "[웹앱 아이디어]";
+  const layout = appState.layout.trim() || "[화면 구조]";
+  const theme = appState.theme.trim() || "[디자인 테마]";
+  const bugDesc = appState.bugDesc.trim() || "[문제 증상]";
+  const dataTopic = appState.dataTopic.trim() || "[주제]";
+  const dataDetail = appState.dataDetail.trim() || "[학습 내용]";
+  const extraEffect = appState.extraEffect.trim() || "[추가 효과]";
+
+  // 화면 곳곳에 있는 뱃지(Pill) 일괄 업데이트
+  document.querySelectorAll('.pill-concept').forEach(el => el.textContent = concept);
+  document.querySelectorAll('.pill-appType').forEach(el => el.textContent = appType);
+
+  // 1단계 프롬프트
+  document.getElementById('prompt-step1-1').textContent = `나는 ${subject} 과목을 배우고 있어. 교과서 목차를 단원별로 간단하게 정리해 줘.`;
+  document.getElementById('prompt-step1-2').textContent = `위 목차 중에서 ${unit} 단원에서 제일 중요한 핵심 개념 3가지를 뽑아줘. 친구들에게 설명하듯 아주 쉽게 말해줘.`;
+  document.getElementById('prompt-step1-3').textContent = `이 개념을 활용해서 웹앱을 만들고 싶어. ${concept} 개념에 딱 맞는 창의적인 웹앱 아이디어 3가지를 추천해 줘. 단순한 퀴즈 말고, 게임이나 가상 실험처럼 사용자가 직접 참여할 수 있는 방식으로 구체적으로 알려줘.`;
+
+  // 2단계 프롬프트
+  document.getElementById('prompt-step2').textContent = `추천해 준 아이디어 중에서 ${appType}(으)로 결정했어! 코드는 아직 작성하지 말고, 기획만 도와줘. 화면을 클릭하거나 터치했을 때 어떤 변화가 일어나는지 앱의 작동 과정을 구체적으로 설명해 줘.`;
+
+  // 3단계 프롬프트
+  document.getElementById('prompt-step3-2').textContent = `화면 구조는 ${layout}, 테마는 ${theme}(으)로 할게. 이 내용과 어울리는 앱 제목도 하나 지어줘. \n지금까지 우리가 정한 내용(핵심 개념, 작동 방식, 화면 구조, 테마, 제목)을 모아서 '최종 웹앱 기획안'으로 깔끔하게 정리해 줘.`;
+
+  // 4단계 디버깅 프롬프트
+  document.getElementById('prompt-step4-2').textContent = `코드를 실행해 보니까 ${bugDesc} 문제가 발생했어. 원인을 찾아서 고친 다음, 수정된 전체 코드를 다시 줘.`;
+
+  // 5단계 프롬프트
+  document.getElementById('prompt-step5-1').textContent = `기능이 잘 작동해! 이제 실제 교과 내용으로 앱을 채워줘. ${dataTopic}에 대한 ${dataDetail} 내용을 코드 안의 기본 데이터로 넉넉하게 넣고 전체 코드를 다시 줘.`;
+  document.getElementById('prompt-step5-2').textContent = `마지막으로 ${extraEffect} 효과를 추가해서 디테일을 높이고 싶어. 반영된 최종 단일 HTML 코드를 줘.`;
+
+  // 6단계 소개페이지 프롬프트
+  document.getElementById('prompt-step6').textContent = `우리가 만든 앱을 친구들 앞에서 발표할 때 사용할 '소개 웹페이지'를 만들어 줘.\n\n- 기획 의도: 친구들이 ${concept}(을)를 쉽게 이해하도록 돕기 위해 기획했어.\n- 핵심 기능: 이 앱의 주요 작동 방식 2~3가지를 알기 쉽게 요약해 줘.\n- 디자인: 앱의 분위기와 어울리는 깔끔한 스타일로 꾸미고, 화면 맨 위에는 '앱 체험하기' 버튼을 크게 넣어 줘.\n\n내가 바로 실행해 볼 수 있게 소개 페이지도 단일 HTML 코드 하나로 줘.`;
+}
+
+/* ===== 6. 입력 감지 및 즉시 반영 ===== */
+document.querySelectorAll('input[data-var], textarea[data-var]').forEach(input => {
+  input.addEventListener('input', (e) => {
+    const varName = e.target.dataset.var;
+    if (varName) {
+      appState[varName] = e.target.value;
+      renderAllPrompts();
+    }
+  });
+});
+
+// 시작 시 한 번 렌더링
+renderAllPrompts();
+</script>
+</body>
+</html>
